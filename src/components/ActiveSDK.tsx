@@ -96,9 +96,9 @@ const ActiveSDK = () => {
     }
 
     try {
-      // 'https://chatbox-app.botbanhang.vn/v1/app/app-installed/update'
+      // 'https://cwo4kg8s8okss448sgo4o4c8.35.198.216.143.sslip.io/v1/app/app-installed/update'
       const END_POINT =
-        'https://cwo4kg8s8okss448sgo4o4c8.35.198.216.143.sslip.io/v1/app/app-installed/update'
+        'https://chatbox-app.botbanhang.vn/v1/app/app-installed/update'
 
       const response = await fetch(END_POINT, {
         method: 'POST',
