@@ -1,0 +1,5 @@
+{
+  "name": "RETION x ERP Sync Bridge",
+  "description": "A high-fidelity synchronization dashboard between RETION Chat and ERP systems, featuring customer verification, two-way linking, and automated messaging status tracking.",
+  "requestFramePermissions": []
+}
