@@ -1,13 +1,14 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
+import { Routes, Route } from 'react-router-dom'
 import { Customer } from './types'
 import { initialCustomers } from './services/mockData'
 import RetionWidget from './components/RetionWidget'
+import ActiveSDK from './components/ActiveSDK'
 
 /**
- * Component chính của ứng dụng
- * @returns JSX.Element - Giao diện thông tin khách hàng
+ * Component trang chủ - Thông tin khách hàng
  */
-const App = () => {
+const HomePage = () => {
   /** Danh sách khách hàng */
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers)
 
@@ -57,6 +58,26 @@ const App = () => {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
       `}</style>
     </div>
+  )
+}
+
+/**
+ * Component chính của ứng dụng - Định nghĩa các routes
+ */
+const App = () => {
+  return (
+    <Routes>
+      {/** Trang chủ - Thông tin khách hàng */}
+      <Route
+        path="/"
+        element={<HomePage />}
+      />
+      {/** Trang OAuth - Kích hoạt SDK */}
+      <Route
+        path="/oauth"
+        element={<ActiveSDK />}
+      />
+    </Routes>
   )
 }
 
