@@ -97,51 +97,63 @@ const ActiveSDK = () => {
 
     try {
       // 'https://chatbox-app.botbanhang.vn/v1/app/app-installed/update'
+      /** Endpoint cài đặt app */
       const END_POINT =
         'https://wcss4s40o4g4c4wgc44w0gsw.35.198.216.143.sslip.io/v1/app/app-installed/update'
 
-      const response = await fetch(END_POINT, {
+      /** Gửi request lên server */
+      const RESPONSE = await fetch(END_POINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(BODY),
       })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      // Kiểm tra response
+      if (!RESPONSE.ok) {
+        throw new Error(`HTTP error! status: ${RESPONSE.status}`)
       }
+      /** Parse response */
+      const RESULT = await RESPONSE.json()
 
-      const result = await response.json()
-
-      // 🔹 Fix: Response dùng key "succes" (thiếu chữ s)
-      const isSuccess = result?.succes === true || result?.success === true
-
-      if (isSuccess && result?.code === 200) {
-        const appData = result?.data?.app_installed
+      /** Fix: Response dùng key "succes" (thiếu chữ s) */
+      const IS_SUCCESS = RESULT?.succes === true || RESULT?.success === true
+      // Nếu thành công thì set open warning và type success
+      if (IS_SUCCESS && RESULT?.code === 200) {
+        /** Lấy thông tin app */
+        const APP_DATA = RESULT?.data?.app_installed
 
         // ✅ Nếu muốn lưu thông tin app active để hiển thị ở giao diện khác
         // setAppInfo(appData); // (nếu bạn có state appInfo)
 
         setOpenWarning(true)
+        // Set type success
         setType('success')
+        // Set message
         setMessage(
           'Kích hoạt thành công' +
-            (appData?.snap_app?.name ? ` (${appData.snap_app.name})` : '')
+            (APP_DATA?.snap_app?.name ? ` (${APP_DATA.snap_app.name})` : '')
         )
 
-        console.log('App activated:', appData)
+        console.log('App activated:', APP_DATA)
       } else {
+        // Set open warning và type error
         setOpenWarning(true)
+        // Set type error
         setType('error')
-        setMessage(result?.message || t('active_fail'))
+        // Set message
+        setMessage(RESULT?.message || t('active_fail'))
       }
     } catch (error) {
       console.error('Active SDK error:', error)
+      // Set open warning và type error
       setOpenWarning(true)
+      // Set type error
       setType('error')
+      // Set message
       setMessage(t('active_fail'))
     } finally {
+      // Set loading
       setLoading(false)
     }
   }

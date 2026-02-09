@@ -36,7 +36,7 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
   /**
    * Xử lý tìm kiếm khách hàng theo mã
    */
-  const handleSearch = () => {
+  const handleSearch = async () => {
     // Kiểm tra mã rỗng
     if (!search_code.trim()) return
     // cập nhật trạng thái tìm kiếm
@@ -44,23 +44,53 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
     // xóa thông báo lỗi
     setError('')
 
-    // Giả lập gọi API ERP với độ trễ 600ms
-    setTimeout(() => {
-      // Tìm khách hàng theo mã
-      const MATCH = customers.find(c => c.customerCode === search_code.trim())
-      // cập nhật trạng thái tìm thấy
+    try {
+      // Định nghĩa URL gọi API
+      const URL = `https://ta-apicdp.envirovn.com/v1/ocany/retion/zema/customers?customerCode=${search_code.trim()}`
+
+      // Gọi API lấy dữ liệu
+      const RESPONSE = await fetch(URL, {
+        method: 'GET',
+        headers: {
+          accept: 'application/json',
+          token:
+            'de9998407c3369a856aea70695b69ad3720dc8d4cb7d8cf6bf60fbfc28844713',
+          product: 'ocanyRetion',
+        },
+      })
+
+      // Kiểm tra phản hồi từ server
+      if (!RESPONSE.ok) {
+        throw new Error('Kêt nối thất bại')
+      }
+
+      // Chuyển đổi dữ liệu sang JSON
+      const DATA = await RESPONSE.json()
+
+      // Lấy thông tin bản ghi đầu tiên nếu trả về mảng hoặc object data
+      const MATCH = Array.isArray(DATA)
+        ? DATA[0]
+        : DATA?.data && Array.isArray(DATA.data)
+          ? DATA.data[0]
+          : DATA
+
+      // Kiểm tra và cập nhật kết quả
       if (MATCH) {
-        // lưu thông tin khách hàng tìm được
+        // Cập nhật thông tin khách hàng tìm được
         setFoundCustomer(MATCH)
       } else {
-        // xóa thông tin khách hàng tìm được
+        // Xóa thông tin khách hàng cũ & báo lỗi
         setFoundCustomer(null)
-        // hiển thị thông báo lỗi
         setError('Không tìm thấy mã khách hàng trong hệ thống')
       }
-      // cập nhật trạng thái tìm kiếm
+    } catch (error) {
+      // Xử lý lỗi ngoại lệ
+      setFoundCustomer(null)
+      setError('Đã có lỗi xảy ra vui lòng thử lại sau')
+    } finally {
+      // Tắt trạng thái tìm kiếm
       setIsSearching(false)
-    }, 600)
+    }
   }
 
   return (
