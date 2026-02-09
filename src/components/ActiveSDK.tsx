@@ -35,71 +35,33 @@ const ActiveSDK = () => {
     }
   }, [])
 
-  // const handleActive = async () => {
-  //   /**
-  //    * Set loading
-  //    */
-  //   setLoading(true);
-  //   /**
-  //    * Body gửi lên server
-  //    */
-  //   const BODY = {
-  //     access_token: access_token,
-  //     token_partner: "active",
-  //     _type: "oauth-access-token",
-  //   };
-  //   /**
-  //    * Nếu có access_token thì gửi request lên server
-  //    */
-  //   if (access_token) {
-  //     try {
-  //       /** Goị hàm OAuth */
-  //       // await WIDGET.oAuth();
-
-  //       const END_POINT =
-  //         "https://chatbox-app.botbanhang.vn/v1/app/app-installed/update";
-
-  //       /** Gửi request lên server */
-  //       setOpenWarning(true);
-  //       /** Set loại modal */
-  //       setType("success");
-  //       /** Set message */
-  //       setMessage(t("active_success"));
-  //     } catch (error) {
-  //       /** Hiện thị cảnh báo */
-  //       setOpenWarning(true);
-  //       /** Set loại modal */
-  //       setType("error");
-  //       /** Set message */
-  //       setMessage(t("active_fail"));
-  //     } finally {
-  //       /** Set loading */
-  //       setLoading(false);
-  //     }
-  //   }
-  // };
+  // Hàm xử lý kích hoạt app
   const handleActive = async () => {
+    // Set loading
     setLoading(true)
-
+    /** Khai báo BODY */
     const BODY = {
       access_token: access_token,
       token_partner: 'active',
       _type: 'oauth-access-token',
     }
-
+    // Kiểm tra access_token
     if (!access_token) {
+      // Hiện thị cảnh báo
       setOpenWarning(true)
+      // Set loại modal
       setType('error')
+      // Set message
       setMessage(t('missing_token'))
+      // Set loading
       setLoading(false)
+      // Return
       return
     }
 
     try {
-      // 'https://chatbox-app.botbanhang.vn/v1/app/app-installed/update'
       /** Endpoint cài đặt app */
-      const END_POINT =
-        'https://wcss4s40o4g4c4wgc44w0gsw.35.198.216.143.sslip.io/v1/app/app-installed/update'
+      const END_POINT = import.meta.env.VITE_API_APP_INSTALLED_UPDATE
 
       /** Gửi request lên server */
       const RESPONSE = await fetch(END_POINT, {
