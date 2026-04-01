@@ -74,6 +74,7 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
     // Hàm thực hiện giải mã và trích xuất thông tin khách hàng từ SDK
     const getConversationInfo = async () => {
       try {
+        console.log('WIDGET', WIDGET)
         /** Khai báo biến chứa thông tin hội thoại */
         let conversation_info
         // Kiểm tra xem SDK có cung cấp partner_token (kiểu mới) hay không
