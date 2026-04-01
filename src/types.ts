@@ -13,7 +13,7 @@ export enum AppView {
  */
 export interface ICustomer {
   /** Mã khách hàng (12 số) */
-  customerCode: string
+  customer_code: string
   /** Họ và tên khách hàng */
   name: string
   /** Địa chỉ email */
