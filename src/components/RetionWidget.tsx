@@ -90,17 +90,18 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
         console.log('conversation_info', conversation_info)
 
         /** Trích xuất Facebook Page ID từ profile trả về */
-        const PAGE_ID = conversation_info?.public_profile?.fb_page_id
+        const PAGE_ID = conversation_info?.public_profile?.fb_page_id || ''
         /** Trích xuất Facebook Client ID từ profile trả về */
-        const CLIENT_ID = conversation_info?.public_profile?.fb_client_id
+        const CLIENT_ID = conversation_info?.public_profile?.fb_client_id || ''
 
-        // Nếu SDK trả về đủ thông tin đinh danh
-        if (PAGE_ID && CLIENT_ID) {
-          // Cập nhật Page ID vào state để các hàm khác sử dụng
-          setCurrentPageId(PAGE_ID)
-          // Cập nhật Client ID vào state để đinh danh khách hàng chat
-          setCurrentClientId(CLIENT_ID)
-        }
+        // Luôn cập nhật thông tin định danh mới (kể cả khi rỗng) để tránh cache hội thoại cũ
+        setCurrentPageId(PAGE_ID)
+        setCurrentClientId(CLIENT_ID)
+
+        // Reset dữ liệu tìm kiếm và kết quả cũ để đảm bảo không bị chồng chéo thông tin
+        setSearchCode('')
+        setFoundCustomer(null)
+        setError('')
       } catch (e) {
         // Ghi log lỗi ra console để phục vụ troubleshooting SDK
         console.error('[RetionWidget] Lỗi SDK:', e)

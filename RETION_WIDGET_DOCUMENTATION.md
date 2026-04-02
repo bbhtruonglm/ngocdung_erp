@@ -27,7 +27,10 @@ Component sử dụng các `useState` để quản lý giao diện động:
 ### 2.2. Luồng khởi tạo (Initialization Flow)
 1. **Kết nối SDK**: Sử dụng `useEffect` để đăng ký sự kiện `WIDGET.onEvent`. Khi admin chuyển tab hoặc thay đổi khách hàng chat, Widget sẽ tự động cập nhật thông tin.
 2. **Giải mã thông tin**: Hàm `getConversationInfo` sử dụng `WIDGET.decodeClient()` hoặc `WIDGET.getClientInfo()` để trích xuất `fb_page_id` và `fb_client_id`.
-3. **Cơ chế Fallback**: Nếu chạy ngoài môi trường chatbox (ví dụ Test local), hệ thống sẽ tự động lấy ID từ URL Params (`fb_page_id`, `fb_client_id`) sau 1.5 giây.
+3. **Cơ chế Anti-Stale Data**: Để tránh việc hiển thị nhầm dữ liệu khách hàng từ hội thoại trước, hệ thống sẽ:
+    * Luôn cập nhật Page/Client ID mới (kể cả khi rỗng).
+    * Tự động Reset ô tìm kiếm (`search_code`), Profile khách hàng (`found_customer`) và Thông báo lỗi về trạng thái mặc định ngay khi SDK thông báo có sự thay đổi hội thoại.
+4. **Cơ chế Fallback**: Nếu chạy ngoài môi trường chatbox (ví dụ Test local), hệ thống sẽ tự động lấy ID từ URL Params (`fb_page_id`, `fb_client_id`) sau 1.5 giây.
 
 ### 2.3. Các phương thức xử lý chính
 | Hàm | Giải thích |
