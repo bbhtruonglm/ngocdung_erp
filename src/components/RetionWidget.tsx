@@ -86,6 +86,9 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
           conversation_info = await WIDGET.decodeClient()
         }
 
+
+        console.log('conversation_info', conversation_info)
+
         /** Trích xuất Facebook Page ID từ profile trả về */
         const PAGE_ID = conversation_info?.public_profile?.fb_page_id
         /** Trích xuất Facebook Client ID từ profile trả về */
