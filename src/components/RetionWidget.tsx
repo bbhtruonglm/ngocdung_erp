@@ -131,9 +131,11 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
         /** Lấy Query Params từ URL hiện tại */
         const PARAMS = new URLSearchParams(window.location.search)
         /** Lấy Page ID từ URL hoặc dùng mã mặc định của Zema */
-        const URL_PAGE_ID = PARAMS.get('fb_page_id') || '659249945341148'
+        const URL_PAGE_ID = PARAMS.get('fb_page_id')
+          // || '659249945341148'
         /** Lấy Client ID từ URL hoặc dùng mã test mặc định */
-        const URL_CLIENT_ID = PARAMS.get('fb_client_id') || '21ea33187da942b294696a3d56a39872'
+        const URL_CLIENT_ID = PARAMS.get('fb_client_id')
+          // || '21ea33187da942b294696a3d56a39872'
         
         // Gán dữ liệu fallback vào state để ứng dụng tiếp tục hoạt động
         setCurrentPageId(URL_PAGE_ID)

@@ -14,7 +14,7 @@ const RESOURCES = {
       /** Thiếu token */
       missing_token: 'Không tìm thấy access token',
     },
-  },
+  },  
 }
 
 i18n.use(initReactI18next).init({
