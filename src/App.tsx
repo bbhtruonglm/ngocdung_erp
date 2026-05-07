@@ -20,7 +20,7 @@ const HomePage = () => {
     // Cập nhật trạng thái liên kết và tạo userKey ngẫu nhiên cho khách hàng
     setCustomers(prev =>
       prev.map(c =>
-        c.customerCode === code
+        c.customer_code === code
           ? {
               ...c,
               isLinked: true,

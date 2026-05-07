@@ -25,6 +25,14 @@ export interface IRetionService {
  */
 export class RetionService implements IRetionService {
   /**
+   * Chuẩn hóa dữ liệu text từ runtime để tránh crash khi nhận `null` / `undefined`.
+   * TypeScript đảm bảo ở compile time là chưa đủ vì dữ liệu UI/API vẫn có thể lệch shape.
+   */
+  private normalizeText(value: unknown): string {
+    return typeof value === 'string' ? value.trim() : ''
+  }
+
+  /**
    * Khởi tạo Retion Service
    * @param CONFIG - Cấu hình khởi tạo (mặc định không giả lập)
    */
@@ -171,6 +179,24 @@ export class RetionService implements IRetionService {
     try {
       /** Địa chỉ API thực hiện ánh xạ (map) khách hàng */
       const MAP_URL = import.meta.env.VITE_RETION_MAP_API_URL
+      /** Chuẩn hóa payload trước khi gửi để dễ kiểm tra log và tránh dữ liệu rỗng */
+      const MAP_PAYLOAD = {
+        customer_code: this.normalizeText(code),
+        page_id: this.normalizeText(page_id),
+        client_id: this.normalizeText(client_id),
+      }
+
+      // Ngăn gọi API nếu thiếu endpoint hoặc dữ liệu định danh bắt buộc
+      if (!MAP_URL || !MAP_PAYLOAD.customer_code || !MAP_PAYLOAD.page_id || !MAP_PAYLOAD.client_id) {
+        console.error('[RetionService.linkCustomer] Thiếu dữ liệu map API:', {
+          map_url_exists: Boolean(MAP_URL),
+          payload: MAP_PAYLOAD,
+        })
+        return false
+      }
+
+      // Log payload thực tế để đối chiếu với Network tab và log phía backend
+      console.log('[RetionService.linkCustomer] MAP payload:', MAP_PAYLOAD)
       // Thực hiện Bước 1: Gửi yêu cầu lưu thông tin liên kết vào database mapping
       const RESPONSE_MAP = await fetch(MAP_URL, {
         // Sử dụng POST để tạo mới bản ghi mapping
@@ -182,11 +208,17 @@ export class RetionService implements IRetionService {
           token: import.meta.env.VITE_ZEMA_API_TOKEN,
         },
         // Gửi thông tin định danh khách hàng và hội thoại
-        body: JSON.stringify({ customer_code: code, page_id, client_id }),
+        body: JSON.stringify(MAP_PAYLOAD),
       })
 
       // Nếu bước mapping thất bại (server lỗi 500 hoặc 403 chẳng hạn)
       if (!RESPONSE_MAP.ok) {
+        console.error('[RetionService.linkCustomer] Map API thất bại:', {
+          status: RESPONSE_MAP.status,
+          status_text: RESPONSE_MAP.statusText,
+          payload: MAP_PAYLOAD,
+          response_text: await RESPONSE_MAP.text(),
+        })
         // Dừng quy trình và trả về thất bại
         return false
       }

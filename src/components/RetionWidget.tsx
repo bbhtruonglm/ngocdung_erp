@@ -56,6 +56,41 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
   const RETION_SERVICE = new RetionService({ is_mock: IS_MOCK_MODE })
 
   /**
+   * Chuẩn hóa định danh hội thoại từ nhiều nguồn khác nhau của SDK và URL.
+   * SDK hiện có thể trả về `page_id` hoặc `fb_page_id`, còn `client_id` đôi khi
+   * nằm ở `public_profile`, top-level hoặc đã được cache trong instance WIDGET.
+   */
+  const getNormalizedConversationIds = (conversation_info?: any) => {
+    /** Dữ liệu hồ sơ công khai từ SDK */
+    const PUBLIC_PROFILE = conversation_info?.public_profile || {}
+    /** Query params fallback khi chạy ngoài chatbox */
+    const PARAMS = new URLSearchParams(window.location.search)
+
+    /** Ưu tiên page_id chuẩn của SDK, sau đó fallback về fb_page_id */
+    const PAGE_ID = String(
+      PUBLIC_PROFILE.page_id ||
+        PUBLIC_PROFILE.fb_page_id ||
+        conversation_info?.page_id ||
+        PARAMS.get('page_id') ||
+        PARAMS.get('fb_page_id') ||
+        ''
+    ).trim()
+
+    /** Ưu tiên giá trị do SDK giữ trên instance, sau đó fallback các field tương thích */
+    const CLIENT_ID = String(
+      WIDGET.client_id ||
+        PUBLIC_PROFILE.client_id ||
+        PUBLIC_PROFILE.fb_client_id ||
+        conversation_info?.client_id ||
+        PARAMS.get('client_id') ||
+        PARAMS.get('fb_client_id') ||
+        ''
+    ).trim()
+
+    return { PAGE_ID, CLIENT_ID }
+  }
+
+  /**
    * Effect thực hiện kết nối với BBH SDK khi Widget vừa được gắn vào DOM
    */
   useEffect(() => {
@@ -89,10 +124,13 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
 
         console.log('conversation_info', conversation_info)
 
-        /** Trích xuất Facebook Page ID từ profile trả về */
-        const PAGE_ID = conversation_info?.public_profile?.fb_page_id || ''
-        /** Trích xuất Facebook Client ID từ profile trả về */
-        const CLIENT_ID = conversation_info?.public_profile?.fb_client_id || ''
+        /** Chuẩn hóa Page ID / Client ID từ dữ liệu SDK thực tế */
+        const { PAGE_ID, CLIENT_ID } = getNormalizedConversationIds(conversation_info)
+
+        console.log('[RetionWidget] Normalized conversation ids:', {
+          page_id: PAGE_ID,
+          client_id: CLIENT_ID,
+        })
 
         // Luôn cập nhật thông tin định danh mới (kể cả khi rỗng) để tránh cache hội thoại cũ
         setCurrentPageId(PAGE_ID)
@@ -128,28 +166,35 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
    * Cơ chế dự phòng (Fallback) khi SDK không cung cấp thông tin kịp thời
    */
   useEffect(() => {
+    // Nếu SDK đã cung cấp đủ dữ liệu thì không cần fallback từ URL nữa
+    if (current_page_id && current_client_id) return
+
     // Thiết lập một bộ hẹn giờ sau 1.5 giây nếu vẫn chưa có ID từ SDK
     const TIMER = setTimeout(() => {
       // Nếu trạng thái ID vẫn đang trống (thường xảy ra khi test ngoài chatbox)
       if (!current_page_id || !current_client_id) {
         /** Lấy Query Params từ URL hiện tại */
         const PARAMS = new URLSearchParams(window.location.search)
-        /** Lấy Page ID từ URL hoặc dùng mã mặc định của Zema */
-        const URL_PAGE_ID = PARAMS.get('fb_page_id')
-          // || '659249945341148'
-        /** Lấy Client ID từ URL hoặc dùng mã test mặc định */
-        const URL_CLIENT_ID = PARAMS.get('fb_client_id')
-          // || '21ea33187da942b294696a3d56a39872'
-        
-        // Gán dữ liệu fallback vào state để ứng dụng tiếp tục hoạt động
-        setCurrentPageId(URL_PAGE_ID)
-        setCurrentClientId(URL_CLIENT_ID)
+        /** Lấy Page ID từ URL theo cả key mới và key cũ */
+        const URL_PAGE_ID = PARAMS.get('page_id') || PARAMS.get('fb_page_id')
+        /** Lấy Client ID từ URL theo cả key mới và key cũ */
+        const URL_CLIENT_ID = PARAMS.get('client_id') || PARAMS.get('fb_client_id')
+
+        // Chỉ fallback khi URL thực sự có đủ dữ liệu, tránh ghi đè state hợp lệ bằng chuỗi rỗng
+        if (URL_PAGE_ID && URL_CLIENT_ID) {
+          console.log('[RetionWidget] Fallback conversation ids from URL:', {
+            page_id: URL_PAGE_ID,
+            client_id: URL_CLIENT_ID,
+          })
+          setCurrentPageId(URL_PAGE_ID)
+          setCurrentClientId(URL_CLIENT_ID)
+        }
       }
     }, 1500)
 
     // Cleanup timer khi component unmount để tránh rò rỉ bộ nhớ
     return () => clearTimeout(TIMER)
-  }, [])
+  }, [current_page_id, current_client_id])
 
   /**
    * Hàm gọi Service để lấy mã khách hàng ERP từ thông tin hội thoại Retion
@@ -211,6 +256,7 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
       /** Yêu cầu Service thực hiện truy vấn khách hàng từ ERP */
       const CUSTOMER = await RETION_SERVICE.searchCustomer(TARGET_CODE)
 
+        console.log('[RetionWidget] Search customer result:', CUSTOMER)
       // Nếu tìm thấy khách hàng khớp với mã cung cấp
       if (CUSTOMER) {
         // Cập nhật thông tin khách hàng vào state để hiển thị lên thẻ Profile
@@ -248,6 +294,12 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
       const PAGE_ID = current_page_id
       /** Lấy Client ID từ định danh hiện tại */
       const CLIENT_ID = current_client_id
+
+      // Chặn thao tác liên kết nếu chưa lấy được định danh hội thoại hiện tại
+      if (!PAGE_ID || !CLIENT_ID) {
+        setError('Thiếu thông tin hội thoại hiện tại để thực hiện liên kết.')
+        return
+      }
 
       /** Sử dụng Service thực hiện quy trình Map và Update Bio (2 bước API) */
       const SUCCESS = await RETION_SERVICE.linkCustomer(code, PAGE_ID, CLIENT_ID)
@@ -347,7 +399,7 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
               </div>
               <button
                 // Kích hoạt luồng liên kết khách hàng
-                onClick={() => handleLink(found_customer.customerCode)}
+                onClick={() => handleLink(found_customer.customer_code)}
                 disabled={is_searching}
                 className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 text-white text-[12px] font-bold py-3 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
               >
@@ -378,7 +430,7 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
               <div>
                 <h3 className="font-bold text-base">{found_customer.name}</h3>
                 <p className="text-[11px] font-medium text-blue-400 mt-0.5 tracking-wider">
-                  {found_customer.customerCode}
+                  {found_customer.customer_code}
                 </p>
               </div>
               {/* Badge hiển thị trạng thái hoạt động */}
