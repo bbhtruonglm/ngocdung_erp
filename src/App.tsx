@@ -17,14 +17,13 @@ const HomePage = () => {
    * @param code - Mã khách hàng cần liên kết
    */
   const handleLinkCustomer = (code: string) => {
-    // Cập nhật trạng thái liên kết và tạo userKey ngẫu nhiên cho khách hàng
+    // Cập nhật trạng thái liên kết cục bộ để đồng bộ với UI hiện tại
     setCustomers(prev =>
       prev.map(c =>
         c.customer_code === code
           ? {
               ...c,
               isLinked: true,
-              userKey: `ERP-${Math.floor(1000 + Math.random() * 9000)}`,
             }
           : c
       )

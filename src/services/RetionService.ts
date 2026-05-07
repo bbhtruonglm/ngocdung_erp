@@ -154,8 +154,8 @@ export class RetionService implements IRetionService {
       loyaltyPoints: MATCH_DATA.loyaltyPoints || 0,
       // Trạng thái tài khoản (active/inactive)
       status: MATCH_DATA.status || 'active',
-      // Mặc định là false vì đang trong quá trình tìm kiếm để liên kết
-      isLinked: false,
+      // API `cdp?customer_code` trả về `isMap`; true nghĩa là khách đã được liên kết
+      isLinked: Boolean(MATCH_DATA.isMap),
     }
   }
 

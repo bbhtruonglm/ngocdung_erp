@@ -306,19 +306,18 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
 
       // Nếu quy trình liên kết hoàn tất thành công trên server
       if (SUCCESS) {
-        // Kích hoạt callback của parent để đồng bộ trạng thái ở cấp ứng dụng cao hơn
+        // Đồng bộ trạng thái ở cấp ứng dụng cao hơn
         onLink(code)
-        // Cập nhật trạng thái cục bộ ngay lập tức để người dùng thấy biển "Đã đồng bộ" màu xanh
-        setFoundCustomer(prev =>
-          prev
-            ? {
-                ...prev,
-                isLinked: true,
-                // Giả lập một userKey mới được sinh ra từ ERP để hiển thị minh họa
-                userKey: `ERP-${Math.floor(1000 + Math.random() * 9000)}`,
-              }
-            : null
-        )
+
+        // Gọi lại API tìm kiếm để lấy trạng thái `isMap` mới nhất thay vì dựng dữ liệu giả trên UI
+        const REFRESHED_CUSTOMER = await RETION_SERVICE.searchCustomer(code)
+
+        if (REFRESHED_CUSTOMER) {
+          setFoundCustomer(REFRESHED_CUSTOMER)
+        } else {
+          // Fallback tối thiểu khi API refresh chưa phản hồi kịp sau khi map thành công
+          setFoundCustomer(prev => (prev ? { ...prev, isLinked: true } : null))
+        }
       } else {
         // Thông báo nếu một trong các bước API thất bại
         setError('Liên kết khách hàng với Retion thất bại.')
@@ -412,14 +411,11 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
             </div>
           ) : (
             // Hiển thị huy hiệu đã đồng bộ thành công màu xanh lá
-            <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between">
+            <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4">
               <div className="flex items-center gap-2 text-emerald-700 text-xs font-bold uppercase tracking-tight">
                 <ShieldCheck className="w-4 h-4" />
-                Khách hàng đã đồng bộ
+                Khách hàng đã liên kết
               </div>
-              <span className="text-[11px] font-mono text-emerald-600 font-bold bg-emerald-100/50 px-2 py-1 rounded">
-                #{found_customer.userKey}
-              </span>
             </div>
           )}
 
@@ -433,12 +429,14 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
                   {found_customer.customer_code}
                 </p>
               </div>
-              {/* Badge hiển thị trạng thái hoạt động */}
-              <div className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
-                found_customer.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
-              }`}>
-                {found_customer.status === 'active' ? 'Hoạt động' : 'Khóa'}
-              </div>
+              {/* Tạm ẩn badge trạng thái vì API hiện chưa trả về field đủ tin cậy để hiển thị */}
+              {false && (
+                <div className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
+                  found_customer.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'
+                }`}>
+                  {found_customer.status === 'active' ? 'Hoạt động' : 'Khóa'}
+                </div>
+              )}
             </div>
 
             {/* Phần nội dung chi tiết liên hệ */}
