@@ -283,7 +283,7 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
    * Xử lý gửi yêu cầu liên kết (Mapping) khách hàng chat hiện hại với mã khách hàng ERP
    * @param code - Mã khách hàng ERP cần liên kết
    */
-  const handleLink = async (code: string) => {
+  const handleLink = async (code: string, source?: string) => {
     // Khóa nút bấm và hiển thị trạng thái đang xử lý
     setIsSearching(true)
     // Đảm bảo không có thông báo lỗi cũ nào đang hiển thị
@@ -302,7 +302,7 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
       }
 
       /** Sử dụng Service thực hiện quy trình Map và Update Bio (2 bước API) */
-      const SUCCESS = await RETION_SERVICE.linkCustomer(code, PAGE_ID, CLIENT_ID)
+      const SUCCESS = await RETION_SERVICE.linkCustomer(code, PAGE_ID, CLIENT_ID, source)
 
       // Nếu quy trình liên kết hoàn tất thành công trên server
       if (SUCCESS) {
@@ -398,7 +398,7 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
               </div>
               <button
                 // Kích hoạt luồng liên kết khách hàng
-                onClick={() => handleLink(found_customer.customer_code)}
+                onClick={() => handleLink(found_customer.customer_code, found_customer.source)}
                 disabled={is_searching}
                 className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 text-white text-[12px] font-bold py-3 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
               >

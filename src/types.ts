@@ -28,6 +28,8 @@ export interface ICustomer {
   status: 'active' | 'inactive'
   /** Đã liên kết với hệ thống chưa */
   isLinked: boolean
+  /** Nguồn khách hàng trả về từ API CDP */
+  source?: string
   /** Mã định danh người dùng từ ERP (optional) */
   userKey?: string
 }

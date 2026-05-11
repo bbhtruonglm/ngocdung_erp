@@ -17,7 +17,7 @@ export interface IRetionService {
   /** Tìm kiếm thông tin khách hàng từ ERP */
   searchCustomer(code: string): Promise<Customer | null>
   /** Thực hiện liên kết khách hàng với Retion */
-  linkCustomer(code: string, page_id: string, client_id: string): Promise<boolean>
+  linkCustomer(code: string, page_id: string, client_id: string, source?: string): Promise<boolean>
 }
 
 /**
@@ -156,6 +156,8 @@ export class RetionService implements IRetionService {
       status: MATCH_DATA.status || 'active',
       // API `cdp?customer_code` trả về `isMap`; true nghĩa là khách đã được liên kết
       isLinked: Boolean(MATCH_DATA.isMap),
+      // Giữ lại nguồn khách hàng để tái sử dụng khi gọi API map
+      source: this.normalizeText(MATCH_DATA.source),
     }
   }
 
@@ -165,7 +167,7 @@ export class RetionService implements IRetionService {
    * @param page_id - Page ID
    * @param client_id - Client ID
    */
-  async linkCustomer(code: string, page_id: string, client_id: string): Promise<boolean> {
+  async linkCustomer(code: string, page_id: string, client_id: string, source?: string): Promise<boolean> {
     // Xử lý logic giả lập khi đang ở chế độ test
     if (this.CONFIG.is_mock) {
       // Log thông tin hành động liên kết mock
@@ -184,6 +186,7 @@ export class RetionService implements IRetionService {
         customer_code: this.normalizeText(code),
         page_id: this.normalizeText(page_id),
         client_id: this.normalizeText(client_id),
+        source: this.normalizeText(source),
       }
 
       // Ngăn gọi API nếu thiếu endpoint hoặc dữ liệu định danh bắt buộc
