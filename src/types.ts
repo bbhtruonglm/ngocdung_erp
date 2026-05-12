@@ -30,6 +30,8 @@ export interface ICustomer {
   isLinked: boolean
   /** Nguồn khách hàng trả về từ API CDP */
   source?: string
+  /** Link xem chi tiết khách hàng bên ERP */
+  erpUrl?: string
   /** Mã định danh người dùng từ ERP (optional) */
   userKey?: string
 }

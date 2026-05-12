@@ -429,6 +429,16 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
                   {found_customer.customer_code}
                 </p>
               </div>
+              {found_customer.erpUrl && (
+                <a
+                  href={found_customer.erpUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="shrink-0 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-[11px] font-bold text-white transition-colors hover:bg-white/20"
+                >
+                  Xem hồ sơ khách hàng
+                </a>
+              )}
               {/* Tạm ẩn badge trạng thái vì API hiện chưa trả về field đủ tin cậy để hiển thị */}
               {false && (
                 <div className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${

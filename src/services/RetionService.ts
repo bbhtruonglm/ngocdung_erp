@@ -158,6 +158,8 @@ export class RetionService implements IRetionService {
       isLinked: Boolean(MATCH_DATA.isMap),
       // Giữ lại nguồn khách hàng để tái sử dụng khi gọi API map
       source: this.normalizeText(MATCH_DATA.source),
+      // Link chi tiết khách hàng bên ERP để mở từ widget khi backend có trả về
+      erpUrl: this.normalizeText(MATCH_DATA.erpUrl),
     }
   }
 
