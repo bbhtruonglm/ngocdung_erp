@@ -42,6 +42,8 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
   const [current_page_id, setCurrentPageId] = useState<string>('')
   /** ID của khách hàng chat hiện tại lấy từ profile chatbox */
   const [current_client_id, setCurrentClientId] = useState<string>('')
+  /** Mã khách hàng đang được liên kết trên chính hội thoại hiện tại */
+  const [linked_customer_code, setLinkedCustomerCode] = useState<string>('')
 
   /** Ref đánh dấu đã thực hiện gọi API khởi tạo để tránh gọi thừa do React StrictMode */
   const IS_FETCHED_API = useRef(false)
@@ -139,6 +141,7 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
         // Reset dữ liệu tìm kiếm và kết quả cũ để đảm bảo không bị chồng chéo thông tin
         setSearchCode('')
         setFoundCustomer(null)
+        setLinkedCustomerCode('')
         setError('')
       } catch (e) {
         // Ghi log lỗi ra console để phục vụ troubleshooting SDK
@@ -219,11 +222,13 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
 
       // Nếu tìm thấy mã khách hàng đã được lưu trong Bio trước đó
       if (CUSTOMER_ID) {
+        setLinkedCustomerCode(CUSTOMER_ID)
         // Tự động điền mã khách hàng vào ô nhập liệu cho người dùng
         setSearchCode(CUSTOMER_ID)
         // Tự động kích hoạt luồng tìm kiếm thông tin chi tiết từ ERP
         handleSearch(CUSTOMER_ID)
       } else {
+        setLinkedCustomerCode('')
         // Cập nhật thông báo trạng thái "Chưa liên kết" để người dùng biết cần map thủ công
         setError('Chưa liên kết khách hàng với Retion...')
       }
@@ -308,6 +313,9 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
       if (SUCCESS) {
         // Đồng bộ trạng thái ở cấp ứng dụng cao hơn
         onLink(code)
+        // Cập nhật lại mã đang liên kết cho đúng với hội thoại hiện tại
+        setLinkedCustomerCode(code)
+        setSearchCode(code)
 
         // Gọi lại API tìm kiếm để lấy trạng thái `isMap` mới nhất thay vì dựng dữ liệu giả trên UI
         const REFRESHED_CUSTOMER = await RETION_SERVICE.searchCustomer(code)
@@ -389,35 +397,82 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
       {/** Khu vực kết quả khách hàng: Hiển thị Profile khách hàng nếu tìm được */}
       {found_customer ? (
         <div className="space-y-5 animate-in slide-in-from-bottom-2 duration-400">
-          {/* Kiểm tra trạng thái liên kết để hiển thị hành động Map */}
-          {!found_customer.isLinked ? (
-            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
-              <div className="flex items-center gap-2 text-amber-800 text-xs font-bold mb-3">
-                <AlertCircle className="w-4 h-4" />
-                KHÁCH HÀNG CHƯA LIÊN KẾT
+          {/** So sánh khách hàng đang xem với khách hàng đã gắn trên hội thoại hiện tại */}
+          {(() => {
+            const HAS_CONVERSATION_LINK = Boolean(linked_customer_code)
+            const IS_CURRENTLY_LINKED_CUSTOMER =
+              HAS_CONVERSATION_LINK && found_customer.customer_code === linked_customer_code
+            const CAN_RELINK =
+              HAS_CONVERSATION_LINK && found_customer.customer_code !== linked_customer_code
+
+            if (!HAS_CONVERSATION_LINK && !found_customer.isLinked) {
+              return (
+                <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
+                  <div className="flex items-center gap-2 text-amber-800 text-xs font-bold mb-3">
+                    <AlertCircle className="w-4 h-4" />
+                    KHÁCH HÀNG CHƯA LIÊN KẾT
+                  </div>
+                  <button
+                    onClick={() => handleLink(found_customer.customer_code, found_customer.source)}
+                    disabled={is_searching}
+                    className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 text-white text-[12px] font-bold py-3 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
+                  >
+                    {is_searching ? '...' : (
+                      <>
+                        <UserPlus className="w-4 h-4" /> LIÊN KẾT KHÁCH HÀNG
+                      </>
+                    )}
+                  </button>
+                </div>
+              )
+            }
+
+            if (CAN_RELINK) {
+              return (
+                <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-orange-800 text-xs font-bold uppercase tracking-tight">
+                    <AlertCircle className="w-4 h-4" />
+                    Đang có liên kết khác trên hội thoại này
+                  </div>
+                  <p className="text-xs leading-relaxed text-orange-700">
+                    Hội thoại hiện đang liên kết với mã <span className="font-bold">{linked_customer_code}</span>. Chỉ sử dụng
+                    tính năng liên kết lại khi thông tin đang liên kết không trùng khớp với khách hàng hiện tại.
+                  </p>
+                  <button
+                    onClick={() => handleLink(found_customer.customer_code, found_customer.source)}
+                    disabled={is_searching}
+                    className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-slate-300 text-white text-[12px] font-bold py-3 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
+                  >
+                    {is_searching ? '...' : (
+                      <>
+                        <UserPlus className="w-4 h-4" /> LIÊN KẾT LẠI KHÁCH HÀNG
+                      </>
+                    )}
+                  </button>
+                </div>
+              )
+            }
+
+            if (IS_CURRENTLY_LINKED_CUSTOMER) {
+              return (
+                <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4">
+                  <div className="flex items-center gap-2 text-emerald-700 text-xs font-bold uppercase tracking-tight">
+                    <ShieldCheck className="w-4 h-4" />
+                    Khách hàng đã liên kết
+                  </div>
+                </div>
+              )
+            }
+
+            return (
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                <div className="flex items-center gap-2 text-slate-700 text-xs font-bold uppercase tracking-tight">
+                  <ShieldCheck className="w-4 h-4" />
+                  Khách hàng đã có liên kết
+                </div>
               </div>
-              <button
-                // Kích hoạt luồng liên kết khách hàng
-                onClick={() => handleLink(found_customer.customer_code, found_customer.source)}
-                disabled={is_searching}
-                className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 text-white text-[12px] font-bold py-3 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
-              >
-                {is_searching ? '...' : (
-                  <>
-                    <UserPlus className="w-4 h-4" /> LIÊN KẾT KHÁCH HÀNG
-                  </>
-                )}
-              </button>
-            </div>
-          ) : (
-            // Hiển thị huy hiệu đã đồng bộ thành công màu xanh lá
-            <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4">
-              <div className="flex items-center gap-2 text-emerald-700 text-xs font-bold uppercase tracking-tight">
-                <ShieldCheck className="w-4 h-4" />
-                Khách hàng đã liên kết
-              </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/** Card thông tin chi tiết: Chứa tên, điện thoại, email và điểm */}
           <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
