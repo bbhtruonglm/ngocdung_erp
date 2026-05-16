@@ -466,10 +466,22 @@ const RetionWidget = ({ customers, onLink }: IProps) => {
 
             return (
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
-                <div className="flex items-center gap-2 text-slate-700 text-xs font-bold uppercase tracking-tight">
+                <div className="flex items-center gap-2 text-slate-700 text-xs font-bold uppercase tracking-tight mb-3">
                   <ShieldCheck className="w-4 h-4" />
                   Khách hàng đã có liên kết
                 </div>
+                {/* Cho phép người dùng chủ động liên kết lại trong trường hợp liên kết với Retion bị lỗi */}
+                <button
+                  onClick={() => handleLink(found_customer.customer_code, found_customer.source)}
+                  disabled={is_searching}
+                  className="w-full bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 text-white text-[12px] font-bold py-3 rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
+                >
+                  {is_searching ? '...' : (
+                    <>
+                      <UserPlus className="w-4 h-4" /> LIÊN KẾT VỚI RETION
+                    </>
+                  )}
+                </button>
               </div>
             )
           })()}
